@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="author" content="Алексей Ханипов · AI & Marketing Automation | cyberneuro.ru">
+  <title>SEO &amp; Content Decay Audit Hub</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script defer src="/static/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <div class="shell topbar-inner">
+      <div class="brand">
+        <span class="brand-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 4v16h16M7 15l4-5 3 3 5-7M15 6h4v4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <div><strong>SEO &amp; Content Decay Audit Hub</strong><span>Marketing &amp; Growth Ops Suite · <a href="https://cyberneuro.ru">cyberneuro.ru</a></span></div>
+      </div>
+      <div class="project-controls">
+        <label class="project-label"><span>Проект</span><select id="project-select" aria-label="Активный проект" disabled><option>Загрузка…</option></select></label>
+        <button type="button" id="new-project-button" class="button">+ Новый проект</button>
+        <button type="button" id="reset-demos" class="button subtle">Сбросить демо</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell main">
+    <div id="global-message" class="notice" role="status" aria-live="polite" hidden></div>
+    <div id="workspace-empty" class="surface empty" hidden></div>
+    <div id="workspace" aria-busy="true">
+      <section class="overview" aria-labelledby="page-title">
+        <div class="overview-title">
+          <div class="page-context"><span>Органический поиск</span><span class="context-separator" aria-hidden="true"></span><span id="project-domain">—</span><span id="demo-label" class="demo-label" hidden>Демо</span></div>
+          <h1 id="page-title">Аудит контента</h1>
+        </div>
+        <div class="exports" aria-label="Скачать отчёт">
+          <a class="button primary" id="export-xlsx" aria-disabled="true">
+            <svg aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M12 3v12m-4-4 4 4 4-4M5 16v4h14v-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Скачать Excel <span class="file-note">(4 листа)</span>
+          </a>
+          <a class="button" id="export-csv" aria-disabled="true">CSV</a>
+          <a class="button" id="export-md" aria-disabled="true">Markdown-бриф</a>
+        </div>
+      </section>
+
+      <form id="economics-form" class="surface economics">
+        <div class="economics-title">
+          <span class="economics-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 7h16M4 17h16M9 4v6m6 4v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></span>
+          <div><h2>Экономика проекта</h2><span id="economics-currency">Параметры ROI</span></div>
+        </div>
+        <label>CPC <input name="default_cpc" type="number" min="0" step="any" required></label>
+        <label>Конверсия в лид, % <input name="conversion_rate" type="number" min="0" max="100" step="any" required></label>
+        <label>Ценность лида <input name="avg_lead_value" type="number" min="0" step="any" required></label>
+        <button type="submit" class="button primary" disabled>Пересчитать ROI</button>
+      </form>
+
+      <section id="kpis" class="kpis" aria-label="Ключевые показатели"></section>
+
+      <section class="charts" aria-label="Графики аудита">
+        <article class="surface chart-card">
+          <div class="chart-heading"><h2>Потери и возврат трафика</h2><span>Топ-8 URL по потерянным кликам</span></div>
+          <div class="legend bar-legend"><span><i class="swatch lost"></i>Потеряно</span><span><i class="swatch recovered"></i>Можно вернуть</span></div>
+          <div class="bar-plot" id="traffic-chart"></div>
+        </article>
+        <article class="surface chart-card">
+          <div class="chart-heading"><h2>Статусы страниц</h2><span>Распределение по проекту</span></div>
+          <div class="distribution">
+            <div class="donut-plot" id="status-chart"></div>
+            <div class="status-legend" id="status-legend"></div>
+          </div>
+        </article>
+      </section>
+
+      <section class="surface reports" aria-label="Отчёты аудита">
+        <div class="tabs" role="tablist" aria-label="Рабочее пространство">
+          <button type="button" role="tab" id="tab-action" aria-controls="panel-action" aria-selected="true">План рерайта</button>
+          <button type="button" role="tab" id="tab-decay" aria-controls="panel-decay" aria-selected="false" tabindex="-1">Деградация</button>
+          <button type="button" role="tab" id="tab-ctr" aria-controls="panel-ctr" aria-selected="false" tabindex="-1">Точки роста CTR</button>
+          <button type="button" role="tab" id="tab-cannibal" aria-controls="panel-cannibal" aria-selected="false" tabindex="-1">Каннибализация</button>
+          <button type="button" role="tab" id="tab-import" aria-controls="panel-import" aria-selected="false" tabindex="-1">Импорт и карантин</button>
+        </div>
+        <section role="tabpanel" id="panel-action" aria-labelledby="tab-action" tabindex="0">
+          <div class="panel-heading">
+            <div><h2>Приоритетный план рерайта</h2><p id="action-count"></p></div>
+            <div class="filters">
+              <label><span class="sr-only">Поиск по плану</span><input id="action-search" type="search" placeholder="URL или заголовок"></label>
+              <label class="compact-filter">Приоритет от <input id="action-min" type="number" min="0" max="100" step="any" placeholder="0"></label>
+            </div>
+          </div>
+          <div id="action-table"></div>
+        </section>
+        <section role="tabpanel" id="panel-decay" aria-labelledby="tab-decay" tabindex="0" hidden>
+          <div class="panel-heading">
+            <div><h2>Аудит деградации страниц</h2><p id="decay-count"></p></div>
+            <div class="filters">
+              <label><span class="sr-only">Статус деградации</span><select id="decay-status"><option value="">Все статусы</option></select></label>
+              <label><span class="sr-only">Группа контента</span><select id="decay-group"><option value="">Все группы</option></select></label>
+              <label><span class="sr-only">Поиск страниц</span><input type="search" id="decay-search" placeholder="URL или заголовок"></label>
+            </div>
+          </div>
+          <div id="decay-table"></div>
+        </section>
+        <section role="tabpanel" id="panel-ctr" aria-labelledby="tab-ctr" tabindex="0" hidden>
+          <div class="panel-heading"><div><h2>Точки роста CTR</h2><p>Страницы в топ-10 с кликабельностью ниже бенчмарка.</p></div></div>
+          <div id="ctr-table"></div>
+        </section>
+        <section role="tabpanel" id="panel-cannibal" aria-labelledby="tab-cannibal" tabindex="0" hidden>
+          <div class="panel-heading">
+            <div><h2>Каннибализация запросов</h2><p>Запросы, по которым конкурируют несколько страниц.</p></div>
+            <label><span class="sr-only">Поиск кластеров</span><input id="cluster-search" type="search" placeholder="Запрос или URL"></label>
+          </div>
+          <div id="cluster-list" class="clusters"></div>
+        </section>
+        <section role="tabpanel" id="panel-import" aria-labelledby="tab-import" tabindex="0" hidden>
+          <div class="panel-heading"><div><h2>Импорт и Data Quarantine</h2><p>Загрузите CSV или JSON с метриками страниц или запросов.</p></div></div>
+          <form id="import-form" class="import-form">
+            <label>Набор данных<select name="dataset"><option value="pages">Страницы</option><option value="queries">Запросы</option></select></label>
+            <label>Пресет<select name="preset"><option value="standard">Standard</option><option value="gsc">Google Search Console</option><option value="yandex_webmaster">Яндекс Вебмастер</option></select></label>
+            <label>Файл<input type="file" name="file" accept=".csv,.json,text/csv,application/json" required></label>
+            <button type="submit" class="button primary" disabled>Загрузить файл</button>
+          </form>
+          <div id="last-batch" class="last-batch"></div>
+          <div class="panel-heading quarantine-heading">
+            <div><h3>Строки в карантине</h3></div>
+            <div class="filters">
+              <label><span class="sr-only">Пакет импорта</span><select id="quarantine-batch"><option value="">Все загрузки</option></select></label>
+              <label><span class="sr-only">Тип данных в карантине</span><select id="quarantine-dataset"><option value="">Все наборы</option><option value="pages">Страницы</option><option value="queries">Запросы</option></select></label>
+            </div>
+          </div>
+          <div id="quarantine-table"></div>
+        </section>
+      </section>
+    </div>
+    <footer>Алексей Ханипов · AI &amp; Marketing Automation</footer>
+  </main>
+
+  <dialog id="project-dialog" aria-labelledby="dialog-title">
+    <form id="project-form">
+      <div class="dialog-title"><h2 id="dialog-title">Новый проект</h2><button type="button" class="button subtle close-dialog" aria-label="Закрыть">×</button></div>
+      <label>Название<input name="name" maxlength="200" required autofocus></label>
+      <label>Домен<input name="domain" maxlength="255" placeholder="example.com" required></label>
+      <label>Описание<textarea name="description" rows="3"></textarea></label>
+      <div id="dialog-error" class="notice error" role="alert" hidden></div>
+      <div class="dialog-buttons"><button type="button" class="button close-dialog">Отмена</button><button class="button primary" type="submit">Создать проект</button></div>
+    </form>
+  </dialog>
+  <noscript><p class="notice">Включите JavaScript, чтобы открыть рабочее пространство аудита.</p></noscript>
+</body>
+</html>

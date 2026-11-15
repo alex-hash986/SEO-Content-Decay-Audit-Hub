@@ -1,0 +1,30 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: seo_decay
+      POSTGRES_USER: seo_user
+      POSTGRES_PASSWORD: seo_pass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "seo_user", "-d", "seo_decay"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+
+  app:
+    build: .
+    ports:
+      - "8002:8000"
+    environment:
+      DATABASE_URL: postgresql+psycopg://seo_user:seo_pass@db:5432/seo_decay
+      APP_TITLE: "${APP_TITLE:-SEO & Content Decay Audit Hub}"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
